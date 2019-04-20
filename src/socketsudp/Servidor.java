@@ -48,7 +48,14 @@ public class Servidor extends Thread{
                     
             while(true){
                 envia.receive(recebe);
-               
+                
+                for(int i = 0; i < recebe.getLength(); i++){
+                    System.out.print((char) recebe.getData()[i]);
+                }
+                System.out.print(" "+recebe.getPort());
+                
+                System.out.println();
+                
               if (!caminhoPort.contains(recebe.getPort())) {
                     caminhoClientes.add(recebe.getAddress());
                     caminhoPort.add(recebe.getPort());
@@ -56,7 +63,6 @@ public class Servidor extends Thread{
               
               for(int i = 0;  i < caminhoClientes.size();i++){  
                  if (caminhoPort.get(i) != recebe.getPort()) {
-                  
                   DatagramPacket resp = new DatagramPacket(recebe.getData(), recebe.getLength(),caminhoClientes.get(i), caminhoPort.get(i));
                   envia.send(resp);
                  }
