@@ -2,12 +2,9 @@ package socketsudp;
 
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,71 +23,45 @@ import java.util.logging.Logger;
  */
 public class Servidor extends Thread{
     
-    private static List clientes;
-    private static List caminhoClientes;
+    private static List<InetAddress> caminhoClientes;
+    private static List<Integer> caminhoPort;
     
-    private static DatagramSocket n;
-    private String Nome;
-    // guarda o endereco remoto
-     int auxi = 0;
   
     
-    public Servidor (DatagramSocket s){
-        n = s;  
+    public Servidor () throws SocketException{
+        
+        caminhoClientes = new ArrayList<InetAddress>();
+        caminhoPort = new ArrayList<Integer>();  
     }
    
-    public static void main(String[] args) throws SocketException{
-        try {
-          
-            clientes = new ArrayList();
-            caminhoClientes = new ArrayList();
-
-            n = new DatagramSocket(4545);
-           
-            System.out.println("Servidor esperando conexão.......");
-            
-            Thread t = new Servidor(n);
-            t.start();
-    
-        } catch (IOException ex) {
-            Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
-        }
-            
-        
+    public static void main(String[] args) throws Exception{
+        Thread envia = new Servidor();
+        envia.start();                                  
 } 
     
-    @Override
     public void run(){
-
         try {
             
-
-            DatagramPacket recebe = new DatagramPacket(new byte[512], 512);
-            n.receive(recebe);
-                
-            for(int i = 0; i < recebe.getLength(); i++){
-                Nome += ((char) recebe.getData()[i]);
-                System.out.print((char) recebe.getData()[i]);    
-            }
-            
-            System.out.print(" Conectou-se ao Servidor");
-            System.out.println();
-            clientes.add(Nome);
-            caminhoClientes.add(recebe.getAddress());
-            
-            do{
-                 n.receive(recebe);
-                 System.out.print("> ");
-                 
-                 for(int i = 0; i < recebe.getLength(); i++){
-                    System.out.print((char) recebe.getData()[i]);    
-                 }
+                DatagramSocket envia = new DatagramSocket(4545);
+                System.out.println("Esperando conexão com Servidor.....");
+                DatagramPacket recebe = new DatagramPacket(new byte[1024], 1024);
+                    
+            while(true){
+                envia.receive(recebe);
                
-                 System.out.println("");
-
-                 sendToAll(recebe.getData(), recebe.getLength(), recebe.getPort());
-                        
-            }while(true);
+              if (!caminhoPort.contains(recebe.getPort())) {
+                    caminhoClientes.add(recebe.getAddress());
+                    caminhoPort.add(recebe.getPort());
+                }
+              
+              for(int i = 0;  i < caminhoClientes.size();i++){  
+                 if (caminhoPort.get(i) != recebe.getPort()) {
+                  
+                  DatagramPacket resp = new DatagramPacket(recebe.getData(), recebe.getLength(),caminhoClientes.get(i), caminhoPort.get(i));
+                  envia.send(resp);
+                 }
+              } 
+            }
             
         } catch (SocketException ex) {
             Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
@@ -98,20 +69,5 @@ public class Servidor extends Thread{
             Logger.getLogger(Servidor.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    private void sendToAll(byte getData[] , int getLength, int getPort) throws IOException {
-
-        int aux = 0;
-        
-         while(aux < caminhoClientes.size()){
-             
-             System.out.println(caminhoClientes.get(aux));
-             
-            DatagramPacket resp = new DatagramPacket(getData, getLength, (InetAddress)caminhoClientes.get(aux), getPort);
-             n.send(resp);
-      
-            aux++;
-         }
-        }
-  
+ 
 }      

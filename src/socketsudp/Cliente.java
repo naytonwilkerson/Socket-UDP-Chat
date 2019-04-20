@@ -12,6 +12,12 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -22,61 +28,73 @@ public class Cliente extends Thread {
     private static DatagramSocket s;
  
     
-    public Cliente (DatagramSocket s){
-        s = s;
+    public Cliente (DatagramSocket n){
+        s = n;
     }
  
     
-    public static void main(String[] args) throws SocketException, IOException {
+    public static void main(String[] args) {
         
-          s = new DatagramSocket();
-          InetAddress dest = InetAddress.getByName("localhost");
-           
-           BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in)); 
-           System.out.print("Entre com o seu nome: ");
-            String Nome = teclado.readLine();
+      
+          
+        try {
+      
+            InetAddress dest = InetAddress.getByName("localhost");
+            BufferedReader teclado = new BufferedReader(new InputStreamReader(System.in));
+            s = new DatagramSocket();
             
-            byte[] buffer1 = Nome.getBytes();
-            DatagramPacket msg1 = new DatagramPacket(buffer1,buffer1.length, dest, 4545);
-            s.send(msg1);
+            System.out.print("Entre com o seu nome: ");
+            String Nome = teclado.readLine();
+            byte[] buffer = Nome.getBytes();
+            DatagramPacket msg = new DatagramPacket(buffer,buffer.length, dest, 4545);
+            s.send(msg);
             
             Thread t = new Cliente(s);
             t.start();
-            
-            String envio;
-            System.out.print("> ");
-            envio=teclado.readLine();
            
-           while(!envio.equalsIgnoreCase("")){
-               
-                byte[] buffer = envio.getBytes(); 
-                DatagramPacket msg = new DatagramPacket(buffer,buffer.length, dest, 4545);
-                s.send(msg);
+            String envio;
+ 
+            do{
+                
                 System.out.print("> ");
-                envio=teclado.readLine();
-            }
-                           
-           s.close();
+                envio= Nome+" disse: "+ teclado.readLine();
+                buffer = envio.getBytes(); 
+                msg = new DatagramPacket(buffer,buffer.length, dest, 4545);
+                s.send(msg);
+                
+            }while(!envio.equalsIgnoreCase(""));
+            
+            s.close();
+            
+        } catch (UnknownHostException ex) {
+            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SocketException ex) {
+            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (IOException ex) {
+            Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
+        }
         }
            
     
     @Override
     public void run(){
         try {
-           String Dados = "";
-           DatagramPacket resposta = new DatagramPacket(new byte[512], 512);
+           String Dados;
+           DatagramPacket resposta = new DatagramPacket(new byte[1024], 1024);
+           s.receive(resposta);
  
            do{
-                s.receive(resposta);
-                System.out.print("Servidor diz: ");
+                Dados = "";
                 for(int i = 0; i < resposta.getLength(); i++){
                     Dados += ((char) resposta.getData()[i]);
                     System.out.print((char) resposta.getData()[i]);
                 }
                 System.out.println();
-                System.out.println("> ");
+                System.out.print("> ");
+                s.receive(resposta);
                   
            }while(!Dados.equals("")); 
+           
         } catch (IOException ex) {
             System.out.println(ex.getMessage());
         } 
