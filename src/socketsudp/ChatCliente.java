@@ -25,6 +25,7 @@ public class ChatCliente extends javax.swing.JFrame {
      * Creates new form ChatCliente
      */
     Cliente cliente;
+    String texto;
     
     public ChatCliente() throws UnknownHostException, SocketException {
         initComponents();
@@ -104,8 +105,11 @@ public class ChatCliente extends javax.swing.JFrame {
 
     private void enviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enviaActionPerformed
         // TODO add your handling code here:
-        String texto = Texto.getText();
+        texto = Texto.getText();
+        recebeTexto.append("\n Você Disse: "+texto);
         cliente.enviaMSG(texto);
+        Texto.setText("");
+        
     }//GEN-LAST:event_enviaActionPerformed
 
     /**
@@ -114,7 +118,7 @@ public class ChatCliente extends javax.swing.JFrame {
      */
     
     public void setText(String texto){
-        recebeTexto.setText("Disse: "+texto);
+        recebeTexto.append("\n Disse: "+texto);
     }
     
     public static void main(String args[]) throws UnknownHostException, SocketException {
@@ -141,9 +145,7 @@ public class ChatCliente extends javax.swing.JFrame {
         }
         //</editor-fold>
         new ChatCliente().setVisible(true);
-        
-        recebeTexto.setText("init");
-
+       
     }
     
     
@@ -153,33 +155,38 @@ public class ChatCliente extends javax.swing.JFrame {
     private  DatagramSocket s;
     ChatCliente chatCliente;
     InetAddress dest;
+    DatagramPacket resposta;
  
     public Cliente () throws UnknownHostException, SocketException{
             
     }
     
-    public Cliente(DatagramSocket n){
+    public Cliente(DatagramSocket n, InetAddress det){
             s = n;
+            dest = det;
     }
     
     public void enviaMSG(String texto){
-        
           try { 
-            System.out.println( "iniciando ");
+              
+            System.out.println("Iniciando: "+texto);
             
-            s = new DatagramSocket();
-            Thread t = new Cliente(s);
-            t.start();
+            if(dest==null&&s==null){
+           
+                s = new DatagramSocket();    
+                dest = InetAddress.getByName("localhost");
             
-            chatCliente = new ChatCliente();
-            chatCliente.setText(texto);
-                
-            dest = InetAddress.getByName("localhost");
-             
+                Thread t = new Cliente(s, dest);
+                t.start();
+           
+            }else{
+                System.out.println("Já há instância");
+           }
+  
             byte[] buffer = texto.getBytes();
             DatagramPacket msg = new DatagramPacket(buffer,buffer.length, dest, 4545);
-            s.send(msg); 
- 
+            s.send(msg);
+
         } catch (UnknownHostException ex) {
             Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SocketException ex) {
@@ -195,8 +202,9 @@ public class ChatCliente extends javax.swing.JFrame {
         try {
           
            String Dados;
-           DatagramPacket resposta = new DatagramPacket(new byte[1024], 1024);
-           
+           if(resposta==null){
+                resposta = new DatagramPacket(new byte[1024], 1024);
+           }
            s.receive(resposta);
            
            do{
@@ -205,7 +213,11 @@ public class ChatCliente extends javax.swing.JFrame {
                     Dados += ((char) resposta.getData()[i]);
                     System.out.print((char) resposta.getData()[i]);
                 }
-                System.out.println();
+                System.out.println(" Recebeu");
+                
+                chatCliente = new ChatCliente();
+                chatCliente.setText(Dados);
+               
                 s.receive(resposta);
                   
            }while(!Dados.equals("")); 
@@ -214,6 +226,7 @@ public class ChatCliente extends javax.swing.JFrame {
             System.out.println(ex.getMessage());
         } 
     }
+
     }
 
     
