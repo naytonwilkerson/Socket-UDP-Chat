@@ -104,12 +104,12 @@ public class ChatCliente extends javax.swing.JFrame {
     }//GEN-LAST:event_TextoActionPerformed
 
     private void enviaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_enviaActionPerformed
-        // TODO add your handling code here:
-        texto = Texto.getText();
-        recebeTexto.append("\n Você Disse: "+texto);
-        cliente.enviaMSG(texto);
-        Texto.setText("");
-        
+            // TODO add your handling code here:
+            
+            texto = Texto.getText();
+            recebeTexto.append("\n Você Disse: "+texto);
+            cliente.enviaMSG(texto);
+            Texto.setText("");
     }//GEN-LAST:event_enviaActionPerformed
 
     /**
@@ -118,6 +118,7 @@ public class ChatCliente extends javax.swing.JFrame {
      */
     
     public void setText(String texto){
+        System.out.println("tela");
         recebeTexto.append("\n Disse: "+texto);
     }
     
@@ -186,6 +187,7 @@ public class ChatCliente extends javax.swing.JFrame {
             byte[] buffer = texto.getBytes();
             DatagramPacket msg = new DatagramPacket(buffer,buffer.length, dest, 4545);
             s.send(msg);
+              System.out.println("Enviado");
 
         } catch (UnknownHostException ex) {
             Logger.getLogger(Cliente.class.getName()).log(Level.SEVERE, null, ex);
@@ -211,9 +213,9 @@ public class ChatCliente extends javax.swing.JFrame {
                 Dados = "";
                 for(int i = 0; i < resposta.getLength(); i++){
                     Dados += ((char) resposta.getData()[i]);
-                    System.out.print((char) resposta.getData()[i]);
+                    
                 }
-                System.out.println(" Recebeu");
+                System.out.println(Dados +" Recebeu");
                 
                 chatCliente = new ChatCliente();
                 chatCliente.setText(Dados);
